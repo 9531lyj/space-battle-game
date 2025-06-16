@@ -1,14 +1,38 @@
 {
   "name": "space-battle-game",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "description": "🚀 3D太空战斗游戏 - 基于Three.js开发，具有瞄准镜系统和技能系统",
+  "author": "9531lyj",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/9531lyj/space-battle-game.git"
+  },
+  "homepage": "https://github.com/9531lyj/space-battle-game",
+  "keywords": [
+    "game",
+    "3d",
+    "threejs",
+    "typescript",
+    "space",
+    "battle",
+    "vite"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy:vercel": "vercel --prod",
+    "deploy:netlify": "netlify deploy --prod --dir=dist",
+    "deploy:gh-pages": "npm run build && gh-pages -d dist",
+    "docker:build": "docker build -t space-battle-game .",
+    "docker:run": "docker run -p 80:80 space-battle-game",
+    "docker:compose": "docker-compose up -d"
   },
   "devDependencies": {
+    "terser": "^5.42.0",
     "typescript": "~5.8.3",
     "vite": "^6.3.5"
   },

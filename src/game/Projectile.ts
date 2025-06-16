@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 export class Projectile {
-  public mesh: THREE.Mesh;
+  public mesh!: THREE.Mesh;
   public position: THREE.Vector3;
   public velocity: THREE.Vector3;
   public damage: number;
@@ -24,10 +24,8 @@ export class Projectile {
     
     // 根据是否为玩家炮弹选择不同颜色
     const color = this.isPlayerProjectile ? 0x00ff00 : 0xff0000;
-    const material = new THREE.MeshBasicMaterial({ 
-      color: color,
-      emissive: color,
-      emissiveIntensity: 0.5
+    const material = new THREE.MeshBasicMaterial({
+      color: color
     });
 
     this.mesh = new THREE.Mesh(geometry, material);

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Projectile } from './Projectile';
 
 export class Enemy {
-  public mesh: THREE.Group;
+  public mesh!: THREE.Group;
   public position: THREE.Vector3;
   public velocity: THREE.Vector3;
   public health: number;
@@ -14,7 +14,7 @@ export class Enemy {
   private shotCooldown: number;
   private movementPattern: 'straight' | 'zigzag' | 'circle';
   private movementTime: number;
-  private targetPosition: THREE.Vector3;
+
 
   constructor(position: THREE.Vector3, movementPattern: 'straight' | 'zigzag' | 'circle' = 'straight') {
     this.position = position.clone();
@@ -28,7 +28,7 @@ export class Enemy {
     this.shotCooldown = 1000; // 1秒冷却时间
     this.movementPattern = movementPattern;
     this.movementTime = 0;
-    this.targetPosition = new THREE.Vector3();
+
     
     this.createMesh();
   }
@@ -108,9 +108,7 @@ export class Enemy {
     // 威胁指示灯
     const lightGeometry = new THREE.SphereGeometry(0.3, 8, 8);
     const lightMaterial = new THREE.MeshBasicMaterial({
-      color: 0xff0000,
-      emissive: 0xff0000,
-      emissiveIntensity: 0.8
+      color: 0xff0000
     });
     const light = new THREE.Mesh(lightGeometry, lightMaterial);
     light.position.set(0, 0.8, -2);
@@ -204,7 +202,7 @@ export class Enemy {
     this.updateHealthBar();
   }
 
-  private updateAnimations(deltaTime: number): void {
+  private updateAnimations(_deltaTime: number): void {
     // 飞机轻微摇摆
     this.mesh.rotation.z = Math.sin(this.movementTime * 2) * 0.08;
     this.mesh.rotation.x = Math.sin(this.movementTime * 1.5) * 0.05;
@@ -222,7 +220,8 @@ export class Enemy {
     const threatLight = this.mesh.getObjectByName('threatLight');
     if (threatLight) {
       const material = (threatLight as THREE.Mesh).material as THREE.MeshBasicMaterial;
-      material.emissiveIntensity = 0.5 + Math.sin(this.movementTime * 6) * 0.3;
+      const intensity = 0.5 + Math.sin(this.movementTime * 6) * 0.3;
+      material.opacity = intensity;
     }
   }
 
@@ -252,7 +251,7 @@ export class Enemy {
     }
   }
 
-  private updateMovement(deltaTime: number, playerPosition: THREE.Vector3): void {
+  private updateMovement(_deltaTime: number, _playerPosition: THREE.Vector3): void {
     switch (this.movementPattern) {
       case 'straight':
         // 直线向前移动
@@ -267,10 +266,6 @@ export class Enemy {
 
       case 'circle':
         // 圆形移动
-        const radius = 20;
-        const centerX = this.targetPosition.x || this.position.x;
-        const centerZ = this.targetPosition.z || this.position.z;
-        
         this.velocity.x = Math.cos(this.movementTime) * this.speed * 0.3;
         this.velocity.z = Math.sin(this.movementTime) * this.speed * 0.3 + this.speed * 0.5;
         break;

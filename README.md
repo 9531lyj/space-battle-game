@@ -145,6 +145,48 @@ space-battle-game/
 - **之字形模式** - 左右摆动前进
 - **圆形模式** - 圆形轨迹移动
 
+## 🚀 在线部署
+
+### 🔥 一键部署脚本 (推荐)
+
+我们提供了智能部署脚本，支持多平台一键部署：
+
+#### Windows用户
+```cmd
+# 直接运行批处理文件
+deploy.bat
+```
+
+#### Linux/Mac用户
+```bash
+# 给脚本执行权限并运行
+chmod +x deploy.sh
+./deploy.sh
+```
+
+#### 脚本功能特性
+- ✅ **自动环境检测** - 检查Node.js、npm版本
+- ✅ **智能依赖管理** - 自动安装和更新依赖
+- ✅ **多平台支持** - Vercel、Cloudflare、Netlify、GitHub Pages
+- ✅ **全平台部署** - 一键部署到所有平台
+- ✅ **友好界面** - 彩色输出和详细提示
+
+### 🌐 在线一键部署
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/9531lyj/space-battle-game)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/9531lyj/space-battle-game)
+
+### 📋 部署平台对比
+
+| 平台 | 特点 | 推荐场景 | 部署难度 |
+|------|------|----------|----------|
+| **Vercel** 🔥 | 零配置、全球CDN、自动HTTPS | 个人项目、快速原型 | ⭐ |
+| **Cloudflare Pages** ☁️ | 无限带宽、边缘计算、DDoS防护 | 高流量、企业级 | ⭐⭐ |
+| **Netlify** 🌊 | 表单处理、边缘函数、A/B测试 | 静态网站、营销页面 | ⭐⭐ |
+| **GitHub Pages** 🐙 | 免费托管、版本控制、开源友好 | 开源项目、文档网站 | ⭐⭐⭐ |
+| **Docker** 🐳 | 容器化、自定义环境、可移植 | 自建服务器、企业内网 | ⭐⭐⭐⭐ |
+
+详细部署指南请查看：**[📚 部署指南](DEPLOYMENT.md)**
+
 ## 📚 项目文档
 
 ### 核心文档
@@ -152,6 +194,7 @@ space-battle-game/
 - **[📦 依赖分析](docs/DEPENDENCIES.md)** - 依赖关系图、版本管理、风险评估
 - **[🔄 流程结构](docs/WORKFLOW.md)** - 游戏循环、状态管理、事件处理流程
 - **[🛠️ 开发指南](docs/DEVELOPMENT.md)** - 环境设置、代码规范、调试技巧
+- **[🚀 部署指南](DEPLOYMENT.md)** - 各平台部署详细说明
 
 ### 快速导航
 ```

@@ -1,72 +1,111 @@
+// 导入样式文件
 import './style.css';
+// 导入Three.js 3D图形库
 import * as THREE from 'three';
-import { GameWorld } from './game/GameWorld';
-import { Player } from './game/Player';
-import { Enemy } from './game/Enemy';
-import { Controls } from './game/Controls';
-import { Projectile } from './game/Projectile';
-import { Crosshair } from './game/Crosshair';
+// 导入游戏核心模块
+import { GameWorld } from './game/GameWorld';    // 游戏世界管理器
+import { Player } from './game/Player';          // 玩家系统
+import { Enemy } from './game/Enemy';            // 敌机AI系统
+import { Controls } from './game/Controls';      // 控制系统
+import { Crosshair } from './game/Crosshair';   // 瞄准镜系统
 
+/**
+ * 太空战斗游戏主类
+ * 负责游戏的整体流程控制、对象管理和游戏循环
+ *
+ * 功能特性:
+ * - 3D太空环境渲染
+ * - 玩家飞机控制系统
+ * - 敌机AI和生成系统
+ * - 碰撞检测和物理系统
+ * - 技能系统和UI管理
+ * - 粒子特效和爆炸效果
+ *
+ * @author 9531lyj
+ * @version 2.0
+ */
 class SpaceBattleGame {
-  private gameWorld: GameWorld;
-  private player: Player;
-  private enemies: Enemy[] = [];
-  private controls: Controls;
-  private crosshair: Crosshair;
-  private gameRunning: boolean = false;
-  private score: number = 0;
-  private enemySpawnTimer: number = 0;
-  private enemySpawnInterval: number = 2000; // 2秒生成一个敌机
-  private lastTime: number = 0;
-  private gameStartTime: number = 0;
+  // 核心游戏对象
+  private gameWorld!: GameWorld;     // 3D游戏世界管理器
+  private player!: Player;           // 玩家飞机对象
+  private enemies: Enemy[] = [];    // 敌机数组
+  private controls!: Controls;       // 输入控制系统
+  private crosshair!: Crosshair;     // 瞄准镜系统
 
-  // UI 元素
-  private scoreElement: HTMLElement;
-  private healthElement: HTMLElement;
-  private energyElement: HTMLElement;
-  private skillElements: { [key: string]: HTMLElement } = {};
+  // 游戏状态管理
+  private gameRunning: boolean = false;        // 游戏运行状态
+  private score: number = 0;                   // 玩家得分
+  private enemySpawnTimer: number = 0;         // 敌机生成计时器
+  private enemySpawnInterval: number = 2000;   // 敌机生成间隔(毫秒) - 2秒生成一个敌机
+  private lastTime: number = 0;                // 上一帧时间戳
+  private gameStartTime: number = 0;           // 游戏开始时间
 
+  // UI界面元素引用
+  private scoreElement!: HTMLElement;                        // 得分显示元素
+  private healthElement!: HTMLElement;                       // 生命值显示元素
+  private energyElement!: HTMLElement;                       // 能量显示元素
+  private skillElements: { [key: string]: HTMLElement } = {}; // 技能UI元素集合
+
+  /**
+   * 构造函数 - 初始化游戏
+   */
   constructor() {
     this.initGame();
   }
 
+  /**
+   * 初始化游戏 - 设置所有游戏组件和系统
+   *
+   * 初始化流程:
+   * 1. 获取HTML画布元素
+   * 2. 创建3D游戏世界
+   * 3. 初始化玩家飞机
+   * 4. 设置控制系统
+   * 5. 配置瞄准镜系统
+   * 6. 绑定UI元素
+   * 7. 注册事件监听器
+   * 8. 启动游戏循环
+   */
   private initGame(): void {
-    // 获取画布
+    // 获取HTML5 Canvas画布元素，用于3D渲染
     const canvas = document.querySelector<HTMLCanvasElement>('#game-canvas')!;
+    if (!canvas) {
+      throw new Error('无法找到游戏画布元素 #game-canvas');
+    }
 
-    // 初始化游戏世界
+    // 初始化3D游戏世界 (场景、相机、渲染器、光照、星空背景)
     this.gameWorld = new GameWorld(canvas);
 
-    // 创建玩家
+    // 创建玩家飞机对象并添加到3D场景中
     this.player = new Player();
     this.gameWorld.addToScene(this.player.mesh);
 
-    // 初始化控制系统
+    // 初始化输入控制系统 (键盘、鼠标控制)
     this.controls = new Controls(this.player, this.gameWorld.camera, canvas);
 
-    // 初始化瞄准镜系统
+    // 初始化瞄准镜系统 (准星、目标锁定、缩放功能)
     this.crosshair = new Crosshair(this.gameWorld.camera, this.gameWorld.scene, canvas);
 
-    // 连接瞄准镜到控制系统
+    // 将瞄准镜系统连接到控制系统，实现瞄准功能
     this.controls.setCrosshair(this.crosshair);
 
-    // 获取UI元素
+    // 获取并绑定游戏UI元素
     this.scoreElement = document.querySelector('#score')!;
     this.healthElement = document.querySelector('#health')!;
     this.energyElement = document.querySelector('#energy')!;
 
-    // 获取技能UI元素
+    // 获取技能UI元素 - 对应四个技能按钮
     this.skillElements = {
-      'rapidFire': document.querySelector('#skill-1')!,
-      'laserBeam': document.querySelector('#skill-2')!,
-      'missile': document.querySelector('#skill-3')!,
-      'shield': document.querySelector('#skill-4')!
+      'rapidFire': document.querySelector('#skill-1')!,  // 快速射击技能
+      'laserBeam': document.querySelector('#skill-2')!,  // 激光束技能
+      'missile': document.querySelector('#skill-3')!,    // 导弹技能
+      'shield': document.querySelector('#skill-4')!      // 护盾技能
     };
 
-    // 窗口大小调整事件
+    // 注册窗口大小调整事件监听器，确保游戏画面自适应
     window.addEventListener('resize', () => this.gameWorld.onWindowResize());
 
-    // 开始游戏
+    // 启动游戏主循环
     this.startGame();
   }
 
@@ -164,63 +203,118 @@ class SpaceBattleGame {
     }
   }
 
+  /**
+   * 碰撞检测系统
+   * 检测所有游戏对象之间的碰撞并处理相应逻辑
+   *
+   * 检测类型:
+   * 1. 玩家炮弹 vs 敌机
+   * 2. 敌机炮弹 vs 玩家
+   * 3. 敌机 vs 玩家直接碰撞
+   * 4. 游戏结束条件检查
+   */
   private checkCollisions(): void {
-    // 检查玩家炮弹与敌机的碰撞
-    this.player.getProjectiles().forEach((projectile, pIndex) => {
-      this.enemies.forEach((enemy, eIndex) => {
+    // 1. 检查玩家炮弹与敌机的碰撞
+    // 使用倒序遍历避免数组索引问题
+    for (let pIndex = this.player.getProjectiles().length - 1; pIndex >= 0; pIndex--) {
+      const projectile = this.player.getProjectiles()[pIndex];
+
+      for (let eIndex = this.enemies.length - 1; eIndex >= 0; eIndex--) {
+        const enemy = this.enemies[eIndex];
+
         if (projectile.checkCollision(enemy.mesh)) {
-          // 敌机受伤
+          // 敌机受到伤害
           enemy.takeDamage(projectile.damage);
 
-          // 移除炮弹
+          // 从场景中移除炮弹
           this.gameWorld.removeFromScene(projectile.mesh);
           this.player.removeProjectile(projectile);
 
-          // 创建爆炸效果
+          // 创建命中爆炸效果
           this.createExplosion(projectile.position);
-        }
-      });
-    });
 
-    // 检查敌机炮弹与玩家的碰撞
+          break; // 炮弹击中目标后停止检测
+        }
+      }
+    }
+
+    // 2. 检查敌机炮弹与玩家的碰撞
     this.enemies.forEach(enemy => {
-      enemy.getProjectiles().forEach((projectile, pIndex) => {
+      for (let pIndex = enemy.getProjectiles().length - 1; pIndex >= 0; pIndex--) {
+        const projectile = enemy.getProjectiles()[pIndex];
+
         if (projectile.checkCollision(this.player.mesh)) {
-          // 玩家受伤
+          // 玩家受到伤害
           this.player.takeDamage(projectile.damage);
 
-          // 移除炮弹
+          // 从场景中移除炮弹
           this.gameWorld.removeFromScene(projectile.mesh);
           enemy.removeProjectile(projectile);
 
-          // 创建爆炸效果
+          // 创建命中爆炸效果
           this.createExplosion(projectile.position);
         }
-      });
-    });
-
-    // 检查敌机与玩家的直接碰撞
-    this.enemies.forEach((enemy, index) => {
-      const distance = enemy.position.distanceTo(this.player.position);
-      if (distance < 5) {
-        // 碰撞伤害
-        this.player.takeDamage(50);
-        enemy.takeDamage(100);
-
-        // 创建大爆炸效果
-        this.createExplosion(enemy.position, true);
       }
     });
 
-    // 检查游戏结束条件
+    // 3. 检查敌机与玩家的直接碰撞
+    this.enemies.forEach((enemy) => {
+      const distance = enemy.position.distanceTo(this.player.position);
+      if (distance < 8) { // 增加碰撞检测范围，提高游戏体验
+        // 双方都受到碰撞伤害
+        this.player.takeDamage(50);
+        enemy.takeDamage(100);
+
+        // 创建大型爆炸效果
+        this.createExplosion(enemy.position, true);
+
+        // 添加屏幕震动效果
+        this.createScreenShake();
+      }
+    });
+
+    // 4. 检查游戏结束条件
     if (!this.player.isAlive()) {
       this.gameOver();
     }
   }
 
+  /**
+   * 创建屏幕震动效果
+   * 在发生剧烈碰撞时增强视觉反馈
+   */
+  private createScreenShake(): void {
+    const camera = this.gameWorld.camera;
+    const originalPosition = camera.position.clone();
+
+    // 震动动画
+    let shakeTime = 0;
+    const shakeDuration = 0.5; // 震动持续时间(秒)
+    const shakeIntensity = 2;  // 震动强度
+
+    const shakeAnimation = () => {
+      if (shakeTime < shakeDuration) {
+        // 随机震动偏移
+        const shakeX = (Math.random() - 0.5) * shakeIntensity;
+        const shakeY = (Math.random() - 0.5) * shakeIntensity;
+
+        camera.position.x = originalPosition.x + shakeX;
+        camera.position.y = originalPosition.y + shakeY;
+
+        shakeTime += 0.016; // 约60FPS
+        requestAnimationFrame(shakeAnimation);
+      } else {
+        // 恢复原始位置
+        camera.position.copy(originalPosition);
+      }
+    };
+
+    shakeAnimation();
+  }
+
   private cleanup(): void {
     // 清理玩家炮弹
-    this.player.getProjectiles().forEach((projectile, index) => {
+    this.player.getProjectiles().forEach((projectile) => {
       if (projectile.isOutOfBounds()) {
         this.gameWorld.removeFromScene(projectile.mesh);
         this.player.removeProjectile(projectile);
@@ -234,7 +328,7 @@ class SpaceBattleGame {
 
     // 清理敌机炮弹
     this.enemies.forEach(enemy => {
-      enemy.getProjectiles().forEach((projectile, index) => {
+      enemy.getProjectiles().forEach((projectile) => {
         if (projectile.isOutOfBounds()) {
           this.gameWorld.removeFromScene(projectile.mesh);
           enemy.removeProjectile(projectile);

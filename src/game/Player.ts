@@ -1,46 +1,94 @@
+// 导入Three.js 3D图形库
 import * as THREE from 'three';
+// 导入炮弹系统
 import { Projectile } from './Projectile';
 
+/**
+ * 技能接口定义
+ * 定义每个技能的基本属性
+ */
 export interface Skill {
-  name: string;
-  cooldown: number;
-  lastUsed: number;
-  energy: number;
-  maxEnergy: number;
+  name: string;        // 技能名称
+  cooldown: number;    // 冷却时间(毫秒)
+  lastUsed: number;    // 上次使用时间
+  energy: number;      // 当前能量值
+  maxEnergy: number;   // 最大能量值
 }
 
+/**
+ * 玩家飞机类
+ * 负责玩家飞机的所有功能和状态管理
+ *
+ * 主要功能:
+ * - 飞机3D模型创建和动画
+ * - 移动控制和物理系统
+ * - 武器系统和射击逻辑
+ * - 技能系统管理
+ * - 生命值和能量管理
+ * - 视觉特效和音效
+ *
+ * @author 9531lyj
+ * @version 2.0
+ */
 export class Player {
-  public mesh: THREE.Group;
-  public position: THREE.Vector3;
-  public velocity: THREE.Vector3;
-  public health: number;
-  public maxHealth: number;
-  public speed: number;
-  public projectiles: Projectile[];
-  public energy: number;
-  public maxEnergy: number;
-  public skills: { [key: string]: Skill };
-  private lastShotTime: number;
-  private shotCooldown: number;
-  private weaponType: 'normal' | 'rapid' | 'laser' | 'missile';
-  private animationTime: number;
+  // 3D对象和位置
+  public mesh!: THREE.Group;           // 玩家飞机3D模型组
+  public position: THREE.Vector3;      // 当前位置坐标
+  public velocity: THREE.Vector3;      // 速度向量
 
+  // 生命值系统
+  public health: number;               // 当前生命值
+  public maxHealth: number;            // 最大生命值
+
+  // 移动系统
+  public speed: number;                // 移动速度
+
+  // 武器系统
+  public projectiles: Projectile[];    // 炮弹数组
+  private lastShotTime: number;        // 上次射击时间
+  private shotCooldown: number;        // 射击冷却时间(毫秒)
+  private weaponType: 'normal' | 'rapid' | 'laser' | 'missile'; // 武器类型
+
+  // 能量和技能系统
+  public energy: number;               // 当前能量值
+  public maxEnergy: number;            // 最大能量值
+  public skills!: { [key: string]: Skill }; // 技能集合
+
+  // 动画系统
+  private animationTime: number;       // 动画时间计数器
+
+  /**
+   * 构造函数 - 初始化玩家飞机
+   * 设置所有初始属性和状态
+   */
   constructor() {
-    this.position = new THREE.Vector3(0, 0, 0);
-    this.velocity = new THREE.Vector3(0, 0, 0);
-    this.health = 100;
-    this.maxHealth = 100;
-    this.speed = 8; // 增加基础速度
-    this.energy = 100;
-    this.maxEnergy = 100;
-    this.projectiles = [];
-    this.lastShotTime = 0;
-    this.shotCooldown = 150; // 减少冷却时间
-    this.weaponType = 'normal';
-    this.animationTime = 0;
+    // 初始化位置和运动
+    this.position = new THREE.Vector3(0, 0, 0);      // 起始位置：世界中心
+    this.velocity = new THREE.Vector3(0, 0, 0);      // 初始速度：静止
 
-    this.initSkills();
-    this.createMesh();
+    // 初始化生命值系统
+    this.health = 100;                               // 满血状态
+    this.maxHealth = 100;                            // 最大生命值
+
+    // 初始化移动系统
+    this.speed = 8;                                  // 基础移动速度(已优化)
+
+    // 初始化能量系统
+    this.energy = 100;                               // 满能量状态
+    this.maxEnergy = 100;                            // 最大能量值
+
+    // 初始化武器系统
+    this.projectiles = [];                           // 空炮弹数组
+    this.lastShotTime = 0;                           // 射击时间重置
+    this.shotCooldown = 150;                         // 射击冷却150毫秒(已优化)
+    this.weaponType = 'normal';                      // 默认武器类型
+
+    // 初始化动画系统
+    this.animationTime = 0;                          // 动画时间计数器
+
+    // 初始化技能系统和3D模型
+    this.initSkills();                               // 设置所有技能
+    this.createMesh();                               // 创建3D飞机模型
   }
 
   private createMesh(): void {
@@ -179,9 +227,7 @@ export class Player {
 
     // 红色导航灯（左翼）
     const redLightMaterial = new THREE.MeshBasicMaterial({
-      color: 0xff0000,
-      emissive: 0xff0000,
-      emissiveIntensity: 0.5
+      color: 0xff0000
     });
     const redLight = new THREE.Mesh(navLightGeometry, redLightMaterial);
     redLight.position.set(-6, 0, -1);
@@ -189,9 +235,7 @@ export class Player {
 
     // 绿色导航灯（右翼）
     const greenLightMaterial = new THREE.MeshBasicMaterial({
-      color: 0x00ff00,
-      emissive: 0x00ff00,
-      emissiveIntensity: 0.5
+      color: 0x00ff00
     });
     const greenLight = new THREE.Mesh(navLightGeometry, greenLightMaterial);
     greenLight.position.set(6, 0, -1);
@@ -200,9 +244,7 @@ export class Player {
     // 白色频闪灯
     const strobeGeometry = new THREE.SphereGeometry(0.15, 8, 8);
     const strobeMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      emissive: 0xffffff,
-      emissiveIntensity: 0.8
+      color: 0xffffff
     });
     const strobeLight = new THREE.Mesh(strobeGeometry, strobeMaterial);
     strobeLight.position.set(0, 1, 2);
@@ -304,7 +346,8 @@ export class Player {
     const strobeLight = this.mesh.getObjectByName('strobeLight');
     if (strobeLight) {
       const material = (strobeLight as THREE.Mesh).material as THREE.MeshBasicMaterial;
-      material.emissiveIntensity = 0.5 + Math.sin(this.animationTime * 8) * 0.3;
+      const intensity = 0.5 + Math.sin(this.animationTime * 8) * 0.3;
+      material.opacity = intensity;
     }
   }
 

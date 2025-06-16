@@ -1,18 +1,39 @@
+// 导入Three.js 3D图形库
 import * as THREE from 'three';
 
+/**
+ * 游戏世界管理类
+ * 负责3D场景的创建、管理和渲染
+ *
+ * 主要功能:
+ * - 3D场景初始化和管理
+ * - 相机系统配置
+ * - WebGL渲染器设置
+ * - 光照系统设计
+ * - 星空背景生成
+ * - 粒子效果管理
+ * - 窗口自适应处理
+ *
+ * @author 9531lyj
+ * @version 2.0
+ */
 export class GameWorld {
-  public scene: THREE.Scene;
-  public camera: THREE.PerspectiveCamera;
-  public renderer: THREE.WebGLRenderer;
-  public canvas: HTMLCanvasElement;
-  
+  public scene!: THREE.Scene;              // 3D场景对象
+  public camera!: THREE.PerspectiveCamera; // 透视相机
+  public renderer!: THREE.WebGLRenderer;   // WebGL渲染器
+  public canvas: HTMLCanvasElement;         // HTML5画布元素
+
+  /**
+   * 构造函数 - 初始化游戏世界
+   * @param canvas HTML5 Canvas画布元素
+   */
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
-    this.initScene();
-    this.initCamera();
-    this.initRenderer();
-    this.initLighting();
-    this.createStarField();
+    this.initScene();      // 初始化3D场景
+    this.initCamera();     // 初始化相机系统
+    this.initRenderer();   // 初始化渲染器
+    this.initLighting();   // 初始化光照系统
+    this.createStarField(); // 创建星空背景
   }
 
   private initScene(): void {

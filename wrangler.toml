@@ -1,0 +1,63 @@
+# Cloudflare Workers/Pages 配置文件
+# 用于部署太空战斗游戏到Cloudflare平台
+# 作者: 9531lyj
+
+name = "space-battle-game"
+compatibility_date = "2024-12-16"
+
+# 生产环境配置
+[env.production]
+name = "space-battle-game-prod"
+
+# Cloudflare Pages 配置
+[env.production.pages]
+compatibility_date = "2024-12-16"
+build_command = "npm run build"
+build_output_dir = "dist"
+
+# 开发环境配置
+[env.development]
+name = "space-battle-game-dev"
+
+# 环境变量
+[vars]
+ENVIRONMENT = "production"
+GAME_VERSION = "2.0"
+AUTHOR = "9531lyj"
+GAME_TITLE = "太空战斗游戏"
+
+# 路由重定向配置 - 支持SPA单页应用
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
+
+# 自定义域名配置 (可选)
+# [env.production.route]
+# pattern = "space-battle.your-domain.com/*"
+# zone_name = "your-domain.com"
+
+# 缓存策略配置
+[cache]
+# 静态资源长期缓存
+"*.js" = "max-age=31536000, immutable"
+"*.css" = "max-age=31536000, immutable"
+"*.png" = "max-age=31536000, immutable"
+"*.jpg" = "max-age=31536000, immutable"
+"*.svg" = "max-age=31536000, immutable"
+"*.woff2" = "max-age=31536000, immutable"
+"*.ico" = "max-age=31536000, immutable"
+
+# HTML文件短期缓存
+"*.html" = "max-age=3600, must-revalidate"
+
+# 安全头配置
+[headers]
+"/*" = [
+  { name = "X-Frame-Options", value = "DENY" },
+  { name = "X-Content-Type-Options", value = "nosniff" },
+  { name = "X-XSS-Protection", value = "1; mode=block" },
+  { name = "Referrer-Policy", value = "strict-origin-when-cross-origin" },
+  { name = "Permissions-Policy", value = "camera=(), microphone=(), geolocation=()" },
+  { name = "Content-Security-Policy", value = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';" }
+]

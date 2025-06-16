@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 
 export class Crosshair {
-  private crosshairElement: HTMLElement;
+  private crosshairElement!: HTMLElement;
   private targetIndicators: HTMLElement[] = [];
   private camera: THREE.PerspectiveCamera;
-  private scene: THREE.Scene;
+
   private raycaster: THREE.Raycaster;
   private mouse: THREE.Vector2;
   private canvas: HTMLCanvasElement;
@@ -13,9 +13,8 @@ export class Crosshair {
   private maxZoom: number = 3;
   private minZoom: number = 1;
 
-  constructor(camera: THREE.PerspectiveCamera, scene: THREE.Scene, canvas: HTMLCanvasElement) {
+  constructor(camera: THREE.PerspectiveCamera, _scene: THREE.Scene, canvas: HTMLCanvasElement) {
     this.camera = camera;
-    this.scene = scene;
     this.canvas = canvas;
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();

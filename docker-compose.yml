@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  space-battle-game:
+    build: .
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    networks:
+      - game-network
+
+networks:
+  game-network:
+    driver: bridge
