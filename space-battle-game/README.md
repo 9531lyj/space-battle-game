@@ -85,6 +85,11 @@ npm run preview
 
 ```
 space-battle-game/
+├── docs/                     # 📚 项目文档
+│   ├── ARCHITECTURE.md       # 架构设计文档
+│   ├── DEPENDENCIES.md       # 依赖分析文档
+│   ├── WORKFLOW.md           # 流程结构文档
+│   └── DEVELOPMENT.md        # 开发指南文档
 ├── src/
 │   ├── game/
 │   │   ├── GameWorld.ts      # 游戏世界管理
@@ -122,6 +127,22 @@ space-battle-game/
 - **直线模式** - 直接向玩家冲锋
 - **之字形模式** - 左右摆动前进
 - **圆形模式** - 圆形轨迹移动
+
+## 📚 项目文档
+
+### 核心文档
+- **[🏗️ 架构设计](docs/ARCHITECTURE.md)** - 系统架构、模块设计、性能优化策略
+- **[📦 依赖分析](docs/DEPENDENCIES.md)** - 依赖关系图、版本管理、风险评估
+- **[🔄 流程结构](docs/WORKFLOW.md)** - 游戏循环、状态管理、事件处理流程
+- **[🛠️ 开发指南](docs/DEVELOPMENT.md)** - 环境设置、代码规范、调试技巧
+
+### 快速导航
+```
+📖 想了解系统设计？     → docs/ARCHITECTURE.md
+🔍 想分析项目依赖？     → docs/DEPENDENCIES.md
+⚡ 想了解游戏流程？     → docs/WORKFLOW.md
+🛠️ 想参与开发？        → docs/DEVELOPMENT.md
+```
 
 ## 🔧 开发说明
 

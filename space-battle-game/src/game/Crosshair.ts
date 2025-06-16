@@ -270,25 +270,43 @@ export class Crosshair {
     }
   }
 
-  public update(enemies: any[]): void {
+  public update(enemies: any[], playerPosition?: THREE.Vector3): void {
     // 清除旧的目标指示器
     this.clearTargetIndicators();
 
-    if (!this.isAiming) return;
+    // 更新瞄准镜动画
+    this.updateCrosshairAnimation();
 
-    // 射线检测
+    if (!this.isAiming) {
+      // 非瞄准状态下显示附近敌机
+      this.showNearbyEnemies(enemies, playerPosition);
+      return;
+    }
+
+    // 瞄准状态下的精确检测
     this.raycaster.setFromCamera(this.mouse, this.camera);
-    
-    // 检测敌机
+
+    let closestEnemy = null;
+    let closestDistance = Infinity;
+
+    // 检测所有敌机，找到最近的目标
     enemies.forEach(enemy => {
       const intersects = this.raycaster.intersectObject(enemy.mesh, true);
       if (intersects.length > 0) {
-        this.createTargetIndicator(enemy, intersects[0].distance);
+        const distance = intersects[0].distance;
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestEnemy = enemy;
+        }
+        this.createTargetIndicator(enemy, distance, distance === closestDistance);
       }
     });
+
+    // 更新瞄准精度指示器
+    this.updateAimingAccuracy(closestEnemy, closestDistance);
   }
 
-  private createTargetIndicator(enemy: any, distance: number): void {
+  private createTargetIndicator(enemy: any, distance: number, isPrimary: boolean = false): void {
     // 将3D位置转换为屏幕坐标
     const vector = enemy.position.clone();
     vector.project(this.camera);
@@ -298,15 +316,39 @@ export class Crosshair {
 
     // 创建目标指示器
     const indicator = document.createElement('div');
-    indicator.className = 'target-indicator';
+    indicator.className = isPrimary ? 'target-indicator primary-target' : 'target-indicator';
     indicator.style.left = `${x}px`;
     indicator.style.top = `${y}px`;
 
-    // 添加距离指示器
-    const distanceDiv = document.createElement('div');
-    distanceDiv.className = 'distance-indicator';
-    distanceDiv.textContent = `${Math.round(distance)}m`;
-    indicator.appendChild(distanceDiv);
+    // 主要目标使用不同样式
+    if (isPrimary) {
+      indicator.style.borderColor = '#ff0000';
+      indicator.style.borderWidth = '3px';
+      indicator.style.boxShadow = '0 0 20px rgba(255, 0, 0, 0.8)';
+    }
+
+    // 添加距离和健康状态指示器
+    const infoDiv = document.createElement('div');
+    infoDiv.className = 'target-info';
+    infoDiv.innerHTML = `
+      <div class="distance">${Math.round(distance)}m</div>
+      <div class="health">${Math.round(enemy.health)}HP</div>
+    `;
+    infoDiv.style.cssText = `
+      position: absolute;
+      top: -40px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: ${isPrimary ? '#ff0000' : '#ffffff'};
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: bold;
+      white-space: nowrap;
+      text-align: center;
+    `;
+    indicator.appendChild(infoDiv);
 
     document.body.appendChild(indicator);
     this.targetIndicators.push(indicator);
@@ -332,6 +374,102 @@ export class Crosshair {
 
   public getZoomLevel(): number {
     return this.zoomLevel;
+  }
+
+  private updateCrosshairAnimation(): void {
+    const time = Date.now() * 0.001;
+
+    // 瞄准镜呼吸效果
+    const breathScale = 1 + Math.sin(time * 2) * 0.02;
+    this.crosshairElement.style.transform = `translate(-50%, -50%) scale(${breathScale})`;
+
+    // 准星闪烁效果
+    const center = this.crosshairElement.querySelector('.crosshair-center') as HTMLElement;
+    if (center) {
+      center.style.opacity = (0.8 + Math.sin(time * 4) * 0.2).toString();
+    }
+  }
+
+  private showNearbyEnemies(enemies: any[], playerPosition?: THREE.Vector3): void {
+    if (!playerPosition) return;
+
+    // 显示附近敌机的方向指示器
+    enemies.forEach(enemy => {
+      const distance = enemy.position.distanceTo(playerPosition);
+      if (distance < 200) { // 200单位范围内
+        this.createDirectionIndicator(enemy, distance);
+      }
+    });
+  }
+
+  private createDirectionIndicator(enemy: any, distance: number): void {
+    // 计算敌机在屏幕边缘的指示位置
+    const vector = enemy.position.clone();
+    vector.project(this.camera);
+
+    // 限制在屏幕边缘
+    const margin = 50;
+    let x = (vector.x * 0.5 + 0.5) * window.innerWidth;
+    let y = (vector.y * -0.5 + 0.5) * window.innerHeight;
+
+    x = Math.max(margin, Math.min(window.innerWidth - margin, x));
+    y = Math.max(margin, Math.min(window.innerHeight - margin, y));
+
+    const indicator = document.createElement('div');
+    indicator.className = 'direction-indicator';
+    indicator.style.cssText = `
+      position: fixed;
+      left: ${x}px;
+      top: ${y}px;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #ffaa00;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 998;
+      opacity: ${Math.max(0.3, 1 - distance / 200)};
+    `;
+
+    document.body.appendChild(indicator);
+    this.targetIndicators.push(indicator);
+  }
+
+  private updateAimingAccuracy(closestEnemy: any, distance: number): void {
+    const accuracyElement = this.crosshairElement.querySelector('.accuracy-indicator');
+    if (!accuracyElement) {
+      // 创建精度指示器
+      const accuracy = document.createElement('div');
+      accuracy.className = 'accuracy-indicator';
+      accuracy.style.cssText = `
+        position: absolute;
+        bottom: -80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        padding: 5px 10px;
+        border-radius: 5px;
+        border: 1px solid #00ff00;
+        color: #00ff00;
+        font-size: 12px;
+        font-weight: bold;
+        text-align: center;
+        min-width: 100px;
+      `;
+      this.crosshairElement.appendChild(accuracy);
+    }
+
+    const accuracy = this.crosshairElement.querySelector('.accuracy-indicator') as HTMLElement;
+    if (closestEnemy && distance < 300) {
+      const hitChance = Math.max(20, 100 - distance / 3);
+      accuracy.textContent = `命中率: ${Math.round(hitChance)}%`;
+      accuracy.style.color = hitChance > 70 ? '#00ff00' : hitChance > 40 ? '#ffff00' : '#ff4400';
+      accuracy.style.borderColor = accuracy.style.color;
+    } else {
+      accuracy.textContent = '无目标';
+      accuracy.style.color = '#666666';
+      accuracy.style.borderColor = '#666666';
+    }
   }
 
   public dispose(): void {

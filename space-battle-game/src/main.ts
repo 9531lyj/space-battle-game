@@ -101,7 +101,7 @@ class SpaceBattleGame {
     this.updateEnemies(deltaTime);
 
     // 更新瞄准镜
-    this.crosshair.update(this.enemies);
+    this.crosshair.update(this.enemies, this.player.position);
 
     // 生成新敌机
     this.spawnEnemies();
