@@ -24,9 +24,12 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "type-check": "tsc --noEmit",
     "deploy:vercel": "vercel --prod",
     "deploy:netlify": "netlify deploy --prod --dir=dist",
     "deploy:gh-pages": "npm run build && gh-pages -d dist",
+    "deploy:cloudflare": "wrangler pages deploy dist --project-name=space-battle-game",
+    "deploy:all": "npm run build && npm run deploy:vercel && npm run deploy:netlify && npm run deploy:cloudflare",
     "docker:build": "docker build -t space-battle-game .",
     "docker:run": "docker run -p 80:80 space-battle-game",
     "docker:compose": "docker-compose up -d"

@@ -1,50 +1,128 @@
-﻿name: Deploy Space Battle Game
+﻿# GitHub Actions 工作流 - 自动部署太空战斗游戏到 GitHub Pages
+# 作者: 9531lyj
+# 邮箱: 2233613389@qq.com
+# 功能: 自动构建并部署到 GitHub Pages
+#
+# 工作流说明:
+# 1. 当代码推送到 main/master 分支时自动触发
+# 2. 构建 TypeScript + Vite 项目
+# 3. 部署到 GitHub Pages
+# 4. 支持手动触发
 
+name: 🚀 部署太空战斗游戏
+
+# 触发条件
 on:
+  # 当推送到 main 或 master 分支时触发
   push:
     branches: [ main, master ]
+  # 允许手动触发工作流
   workflow_dispatch:
 
+# 设置工作流权限 - GitHub Pages 部署所需
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: read          # 读取仓库内容权限
+  pages: write           # 写入 GitHub Pages 权限
+  id-token: write        # 写入 ID token 权限
 
+# 并发控制 - 确保同时只有一个部署在运行，避免冲突
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
+  # 构建和部署作业 - 合并为单个作业以简化流程
   build-and-deploy:
+    name: 🔨 构建并部署
     runs-on: ubuntu-latest
+
+    # 设置 GitHub Pages 环境
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    
+
     steps:
-    - name: Checkout
+    # 步骤1: 检出代码仓库
+    - name: 📥 检出代码
       uses: actions/checkout@v4
-    
-    - name: Setup Node.js
+      with:
+        fetch-depth: 0  # 获取完整的 Git 历史
+
+    # 步骤2: 设置 Node.js 运行环境
+    - name: 🟢 设置 Node.js 环境
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Build
-      run: npm run build
-    
-    - name: Setup Pages
+        node-version: '18'    # 使用 Node.js 18 LTS 版本
+        cache: 'npm'          # 启用 npm 缓存加速构建
+
+    # 步骤3: 安装项目依赖包
+    - name: 📦 安装依赖
+      run: |
+        echo "🔍 检查项目配置..."
+        echo "项目名称: $(cat package.json | grep '"name"' | head -1)"
+        echo "项目版本: $(cat package.json | grep '"version"' | head -1)"
+        echo "📦 开始安装依赖..."
+        npm ci  # 使用 ci 命令进行清洁安装，比 install 更快更可靠
+        echo "✅ 依赖安装完成"
+
+    # 步骤4: TypeScript 类型检查（可选，但推荐）
+    - name: 🔍 TypeScript 类型检查
+      run: |
+        echo "🔍 运行 TypeScript 类型检查..."
+        npm run type-check  # 运行类型检查脚本
+        echo "✅ 类型检查通过"
+
+    # 步骤5: 构建生产版本
+    - name: 🏗️ 构建项目
+      env:
+        NODE_ENV: production  # 设置生产环境变量
+      run: |
+        echo "🏗️ 开始构建生产版本..."
+        npm run build        # 运行构建脚本
+        echo "✅ 构建完成"
+        echo "📊 构建产物信息:"
+        ls -la dist/          # 显示构建产物列表
+        du -sh dist/          # 显示构建产物大小
+        echo "📁 构建产物内容:"
+        find dist/ -type f -name "*.html" -o -name "*.js" -o -name "*.css" | head -10
+
+    # 步骤6: 设置 GitHub Pages 配置
+    - name: ⚙️ 设置 GitHub Pages
       uses: actions/configure-pages@v4
-    
-    - name: Upload artifact
+
+    # 步骤7: 上传构建产物到 GitHub Pages
+    - name: 📤 上传构建产物
       uses: actions/upload-pages-artifact@v3
       with:
-        path: './dist'
-    
-    - name: Deploy to GitHub Pages
+        path: './dist'        # 指定要上传的目录
+
+    # 步骤8: 部署到 GitHub Pages
+    - name: 🌐 部署到 GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
+
+    # 步骤9: 部署成功通知和信息输出
+    - name: 🎉 部署成功通知
+      run: |
+        echo "🎉 太空战斗游戏部署成功！"
+        echo "🌐 游戏地址: ${{ steps.deployment.outputs.page_url }}"
+        echo "📅 部署时间: $(date)"
+        echo "🔗 GitHub 仓库: https://github.com/${{ github.repository }}"
+        echo "👨‍💻 作者: 9531lyj"
+        echo "📧 邮箱: 2233613389@qq.com"
+        echo ""
+        echo "🎮 游戏特性:"
+        echo "  ✨ 3D太空战斗体验"
+        echo "  🎯 瞄准镜系统"
+        echo "  ⚡ 技能系统"
+        echo "  🚀 粒子特效"
+        echo "  🎨 动态光照"
+        echo "  🌌 多层星空背景"
+        echo ""
+        echo "🎮 立即开始游戏: ${{ steps.deployment.outputs.page_url }}"
+        echo ""
+        echo "📋 游戏控制:"
+        echo "  WASD - 移动飞机"
+        echo "  空格 - 发射炮弹"
+        echo "  右键 - 瞄准模式"
+        echo "  1234 - 使用技能"
