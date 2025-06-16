@@ -1,0 +1,160 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  background: #000;
+  color: #fff;
+  overflow: hidden;
+}
+
+#game-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+#game-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+#ui-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  pointer-events: none;
+  padding: 20px;
+}
+
+#player-stats {
+  margin-bottom: 20px;
+}
+
+#score, #health, #energy {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  padding: 5px 10px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 5px;
+  border-left: 4px solid;
+}
+
+#score {
+  color: #00ff00;
+  border-left-color: #00ff00;
+}
+
+#health {
+  color: #ff4444;
+  border-left-color: #ff4444;
+}
+
+#energy {
+  color: #00aaff;
+  border-left-color: #00aaff;
+}
+
+#instructions {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 15px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+#instructions p {
+  margin-bottom: 5px;
+  color: #cccccc;
+}
+
+/* 技能面板 */
+#skills-panel {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.skill-slot {
+  width: 80px;
+  height: 80px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid #333;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.skill-slot:hover {
+  border-color: #00aaff;
+  background: rgba(0, 170, 255, 0.1);
+}
+
+.skill-slot.available {
+  border-color: #00ff00;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.skill-slot.cooldown {
+  border-color: #ff4444;
+  opacity: 0.6;
+}
+
+.skill-key {
+  font-size: 18px;
+  font-weight: bold;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.2);
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 5px;
+}
+
+.skill-name {
+  font-size: 10px;
+  color: #cccccc;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.skill-cooldown {
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  right: 2px;
+  height: 4px;
+  background: rgba(255, 68, 68, 0.8);
+  border-radius: 2px;
+  transform-origin: left;
+  transition: transform 0.1s ease;
+}
+
+/* 游戏加载提示 */
+.loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 24px;
+  color: #00ff00;
+  z-index: 200;
+}

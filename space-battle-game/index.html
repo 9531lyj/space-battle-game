@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>太空战斗游戏 - Space Battle Game</title>
+  </head>
+  <body>
+    <div id="game-container">
+      <div id="ui-overlay">
+        <div id="player-stats">
+          <div id="score">得分: 0</div>
+          <div id="health">生命值: 100</div>
+          <div id="energy">能量: 100</div>
+        </div>
+
+        <div id="skills-panel">
+          <div class="skill-slot" id="skill-1">
+            <div class="skill-key">1</div>
+            <div class="skill-name">快速射击</div>
+            <div class="skill-cooldown"></div>
+          </div>
+          <div class="skill-slot" id="skill-2">
+            <div class="skill-key">2</div>
+            <div class="skill-name">激光束</div>
+            <div class="skill-cooldown"></div>
+          </div>
+          <div class="skill-slot" id="skill-3">
+            <div class="skill-key">3</div>
+            <div class="skill-name">导弹</div>
+            <div class="skill-cooldown"></div>
+          </div>
+          <div class="skill-slot" id="skill-4">
+            <div class="skill-key">4</div>
+            <div class="skill-name">护盾</div>
+            <div class="skill-cooldown"></div>
+          </div>
+        </div>
+
+        <div id="instructions">
+          <p>WASD - 移动飞机</p>
+          <p>Q/E - 上升/下降</p>
+          <p>空格键 - 发射炮弹</p>
+          <p>右键 - 瞄准模式</p>
+          <p>滚轮 - 缩放瞄准镜</p>
+          <p>1234 - 使用技能</p>
+          <p>鼠标 - 控制视角</p>
+        </div>
+      </div>
+      <canvas id="game-canvas"></canvas>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
