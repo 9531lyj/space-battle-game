@@ -1,0 +1,102 @@
+# GitHub Actions 原生 Pages 部署
+# 使用官方 GitHub Pages Actions，无需额外权限
+# 作者: 9531lyj
+
+name: 🚀 GitHub Actions 原生部署
+
+# 触发条件
+on:
+  # 推送到 main 分支时触发
+  push:
+    branches: [ main ]
+  # 手动触发
+  workflow_dispatch:
+
+# 设置权限 - GitHub Pages 部署所需
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 并发控制
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # 构建作业
+  build:
+    name: 🔨 构建项目
+    runs-on: ubuntu-latest
+    
+    steps:
+    # 步骤1: 检出代码
+    - name: 📥 检出代码
+      uses: actions/checkout@v4
+    
+    # 步骤2: 设置 Node.js
+    - name: 🟢 设置 Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    # 步骤3: 安装依赖
+    - name: 📦 安装依赖
+      run: |
+        echo "📦 安装项目依赖..."
+        npm ci
+        echo "✅ 依赖安装完成"
+    
+    # 步骤4: 构建项目
+    - name: 🏗️ 构建项目
+      env:
+        NODE_ENV: production
+      run: |
+        echo "🏗️ 开始构建..."
+        npm run build
+        echo "✅ 构建完成"
+        echo "📊 构建产物:"
+        ls -la dist/
+    
+    # 步骤5: 设置 Pages
+    - name: ⚙️ 设置 Pages
+      uses: actions/configure-pages@v4
+    
+    # 步骤6: 上传构建产物
+    - name: 📤 上传构建产物
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: './dist'
+  
+  # 部署作业
+  deploy:
+    name: 🚀 部署到 Pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+    # 步骤1: 部署到 GitHub Pages
+    - name: 🌐 部署到 GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
+    
+    # 步骤2: 部署成功通知
+    - name: 🎉 部署成功
+      run: |
+        echo "🎉 太空战斗游戏部署成功！"
+        echo "🌐 游戏地址: ${{ steps.deployment.outputs.page_url }}"
+        echo "📅 部署时间: $(date)"
+        echo "👨‍💻 作者: 9531lyj"
+        echo "📧 邮箱: 2233613389@qq.com"
+        echo ""
+        echo "🎮 游戏特性:"
+        echo "  ✨ 3D太空战斗"
+        echo "  💥 敌机击毁效果"
+        echo "  🎯 瞄准系统"
+        echo "  ⚡ 技能系统"
+        echo ""
+        echo "🎮 立即体验: ${{ steps.deployment.outputs.page_url }}"
