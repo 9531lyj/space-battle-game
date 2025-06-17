@@ -86,29 +86,17 @@ jobs:
         echo "📁 构建产物内容:"
         find dist/ -type f -name "*.html" -o -name "*.js" -o -name "*.css" | head -10
 
-    # 步骤6: 设置 GitHub Pages 配置
-    - name: ⚙️ 设置 GitHub Pages
-      uses: actions/configure-pages@v4
+    # 步骤6: 使用 peaceiris/actions-gh-pages 部署（更可靠的方案）
+    - name: 🚀 部署到 GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
       with:
-        # 如果 Pages 未启用，自动启用它
-        enablement: true
-        # 设置构建源为 GitHub Actions
-        token: ${{ secrets.GITHUB_TOKEN }}
-
-    # 步骤7: 上传构建产物到 GitHub Pages
-    - name: 📤 上传构建产物
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: './dist'        # 指定要上传的目录
-        name: github-pages    # 指定 artifact 名称
-
-    # 步骤8: 部署到 GitHub Pages
-    - name: 🌐 部署到 GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        artifact_name: github-pages
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./dist
+        publish_branch: gh-pages
+        user_name: '9531lyj'
+        user_email: '2233613389@qq.com'
+        commit_message: '🚀 Deploy Space Battle Game v2.0 - ${{ github.sha }}'
+        force_orphan: true
 
     # 步骤9: 部署成功通知和信息输出
     - name: 🎉 部署成功通知
