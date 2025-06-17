@@ -506,62 +506,122 @@ class SpaceBattleGame {
     // 停止背景音乐
     this.audioManager.stopBGM();
 
+    // 释放鼠标锁定，确保用户可以点击按钮
+    this.controls.exitPointerLock();
+
+    // 创建全屏覆盖层，防止canvas拦截鼠标事件
+    const overlay = document.createElement('div');
+    overlay.id = 'game-over-overlay';
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 9999;
+      pointer-events: auto;
+    `;
+
     // 显示游戏结束信息
     const gameOverDiv = document.createElement('div');
     gameOverDiv.id = 'game-over-screen';
     gameOverDiv.style.cssText = `
-      position: absolute;
+      position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0, 0, 0, 0.9);
+      background: rgba(0, 0, 0, 0.95);
       color: white;
       padding: 40px;
       border-radius: 15px;
       text-align: center;
       font-size: 24px;
-      z-index: 1000;
+      z-index: 10000;
       border: 2px solid #ff4444;
       box-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
+      pointer-events: auto;
     `;
 
     const restartButton = document.createElement('button');
     restartButton.textContent = '重新开始';
+    restartButton.id = 'restart-button';
     restartButton.style.cssText = `
       margin-top: 20px;
-      padding: 12px 24px;
-      font-size: 18px;
+      padding: 15px 30px;
+      font-size: 20px;
+      font-weight: bold;
       background: #0088ff;
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
       transition: all 0.3s ease;
+      pointer-events: auto;
+      user-select: none;
+      outline: none;
+      box-shadow: 0 4px 8px rgba(0, 136, 255, 0.3);
     `;
 
     // 添加按钮悬停效果
     restartButton.addEventListener('mouseenter', () => {
       restartButton.style.background = '#0066cc';
       restartButton.style.transform = 'scale(1.05)';
+      restartButton.style.boxShadow = '0 6px 12px rgba(0, 102, 204, 0.4)';
     });
     restartButton.addEventListener('mouseleave', () => {
       restartButton.style.background = '#0088ff';
       restartButton.style.transform = 'scale(1)';
+      restartButton.style.boxShadow = '0 4px 8px rgba(0, 136, 255, 0.3)';
     });
 
-    // 绑定重新开始事件
-    restartButton.addEventListener('click', () => {
-      this.restartGame();
+    // 添加按钮按下效果
+    restartButton.addEventListener('mousedown', () => {
+      restartButton.style.transform = 'scale(0.95)';
     });
+    restartButton.addEventListener('mouseup', () => {
+      restartButton.style.transform = 'scale(1.05)';
+    });
+
+    // 绑定重新开始事件 - 使用多种事件确保响应
+    const handleRestart = (event: Event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      console.log('🔄 重新开始按钮被点击');
+      this.restartGame();
+    };
+
+    restartButton.addEventListener('click', handleRestart);
+    restartButton.addEventListener('touchstart', handleRestart);
+
+    // 添加键盘支持
+    const keyboardHandler = (event: KeyboardEvent) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        if (document.getElementById('game-over-screen')) {
+          event.preventDefault();
+          handleRestart(event);
+          document.removeEventListener('keydown', keyboardHandler);
+        }
+      }
+    };
+    document.addEventListener('keydown', keyboardHandler);
 
     gameOverDiv.innerHTML = `
       <h2 style="color: #ff4444; margin-bottom: 20px; text-shadow: 0 0 10px rgba(255, 68, 68, 0.8);">🚀 游戏结束</h2>
       <p style="margin-bottom: 10px;">最终得分: <span style="color: #00ff88; font-weight: bold;">${this.score}</span></p>
       <p style="font-size: 16px; color: #cccccc; margin-bottom: 20px;">感谢您的游戏！</p>
+      <p style="font-size: 14px; color: #aaaaaa; margin-bottom: 20px;">点击按钮或按回车键/空格键重新开始</p>
     `;
     gameOverDiv.appendChild(restartButton);
 
+    // 先添加覆盖层，再添加游戏结束界面
+    document.body.appendChild(overlay);
     document.body.appendChild(gameOverDiv);
+
+    // 确保按钮获得焦点
+    setTimeout(() => {
+      restartButton.focus();
+    }, 100);
 
     console.log(`💀 游戏结束！最终得分: ${this.score}`);
   }
@@ -573,10 +633,15 @@ class SpaceBattleGame {
   private restartGame(): void {
     console.log('🔄 重新开始游戏...');
 
-    // 移除游戏结束界面
+    // 移除游戏结束界面和覆盖层
     const gameOverScreen = document.getElementById('game-over-screen');
+    const gameOverOverlay = document.getElementById('game-over-overlay');
+
     if (gameOverScreen) {
       gameOverScreen.remove();
+    }
+    if (gameOverOverlay) {
+      gameOverOverlay.remove();
     }
 
     // 重置游戏状态
