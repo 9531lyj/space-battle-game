@@ -195,33 +195,9 @@ export class Crosshair {
   }
 
   private initEventListeners(): void {
-    // 鼠标移动事件
+    // 只保留鼠标移动事件用于更新鼠标位置
     this.canvas.addEventListener('mousemove', (event) => {
       this.updateMousePosition(event);
-    });
-
-    // 右键瞄准
-    this.canvas.addEventListener('mousedown', (event) => {
-      if (event.button === 2) { // 右键
-        this.startAiming();
-      }
-    });
-
-    this.canvas.addEventListener('mouseup', (event) => {
-      if (event.button === 2) { // 右键
-        this.stopAiming();
-      }
-    });
-
-    // 滚轮缩放
-    this.canvas.addEventListener('wheel', (event) => {
-      event.preventDefault();
-      this.handleZoom(event.deltaY);
-    });
-
-    // 防止右键菜单
-    this.canvas.addEventListener('contextmenu', (event) => {
-      event.preventDefault();
     });
   }
 
@@ -231,41 +207,52 @@ export class Crosshair {
     this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
   }
 
-  private startAiming(): void {
+  public startAiming(): void {
     this.isAiming = true;
     this.crosshairElement.classList.add('aiming');
-    
+
     // 轻微缩放相机视野
     this.camera.fov = 75 / this.zoomLevel;
     this.camera.updateProjectionMatrix();
+
+    console.log('🎯 进入瞄准模式');
   }
 
-  private stopAiming(): void {
+  public stopAiming(): void {
     this.isAiming = false;
     this.crosshairElement.classList.remove('aiming');
-    
+
     // 恢复相机视野
     this.camera.fov = 75;
     this.camera.updateProjectionMatrix();
+
+    console.log('🎯 退出瞄准模式');
   }
 
-  private handleZoom(deltaY: number): void {
+  public handleZoom(deltaY: number): void {
     if (!this.isAiming) return;
 
     const zoomSpeed = 0.1;
+    const oldZoomLevel = this.zoomLevel;
+
     if (deltaY > 0) {
       this.zoomLevel = Math.max(this.minZoom, this.zoomLevel - zoomSpeed);
     } else {
       this.zoomLevel = Math.min(this.maxZoom, this.zoomLevel + zoomSpeed);
     }
 
-    this.camera.fov = 75 / this.zoomLevel;
-    this.camera.updateProjectionMatrix();
+    // 只有缩放级别真正改变时才更新相机
+    if (Math.abs(this.zoomLevel - oldZoomLevel) > 0.01) {
+      this.camera.fov = 75 / this.zoomLevel;
+      this.camera.updateProjectionMatrix();
 
-    // 更新缩放指示器
-    const zoomText = this.crosshairElement.querySelector('.zoom-text');
-    if (zoomText) {
-      zoomText.textContent = `${this.zoomLevel.toFixed(1)}x`;
+      // 更新缩放指示器
+      const zoomText = this.crosshairElement.querySelector('.zoom-text');
+      if (zoomText) {
+        zoomText.textContent = `${this.zoomLevel.toFixed(1)}x`;
+      }
+
+      console.log(`🔍 瞄准镜缩放: ${this.zoomLevel.toFixed(1)}x`);
     }
   }
 
@@ -476,5 +463,45 @@ export class Crosshair {
     if (this.crosshairElement.parentNode) {
       this.crosshairElement.parentNode.removeChild(this.crosshairElement);
     }
+  }
+
+  /**
+   * 重置瞄准镜状态
+   * 用于游戏重新开始时恢复初始状态
+   */
+  public reset(): void {
+    // 重置瞄准状态
+    this.isAiming = false;
+    this.zoomLevel = 1;
+
+    // 重置鼠标位置
+    this.mouse.set(0, 0);
+
+    // 清除所有目标指示器
+    this.clearTargetIndicators();
+
+    // 重置瞄准镜样式
+    this.crosshairElement.classList.remove('aiming');
+    this.crosshairElement.style.transform = 'translate(-50%, -50%) scale(1)';
+
+    // 重置相机视野
+    this.camera.fov = 75;
+    this.camera.updateProjectionMatrix();
+
+    // 重置缩放指示器
+    const zoomText = this.crosshairElement.querySelector('.zoom-text');
+    if (zoomText) {
+      zoomText.textContent = '1.0x';
+    }
+
+    // 重置精度指示器
+    const accuracyElement = this.crosshairElement.querySelector('.accuracy-indicator') as HTMLElement;
+    if (accuracyElement) {
+      accuracyElement.textContent = '无目标';
+      accuracyElement.style.color = '#666666';
+      accuracyElement.style.borderColor = '#666666';
+    }
+
+    console.log('✅ 瞄准镜状态已重置');
   }
 }

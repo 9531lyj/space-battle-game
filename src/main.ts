@@ -508,38 +508,103 @@ class SpaceBattleGame {
 
     // 显示游戏结束信息
     const gameOverDiv = document.createElement('div');
+    gameOverDiv.id = 'game-over-screen';
     gameOverDiv.style.cssText = `
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.9);
       color: white;
-      padding: 30px;
-      border-radius: 10px;
+      padding: 40px;
+      border-radius: 15px;
       text-align: center;
       font-size: 24px;
       z-index: 1000;
+      border: 2px solid #ff4444;
+      box-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
     `;
 
-    gameOverDiv.innerHTML = `
-      <h2 style="color: #ff4444; margin-bottom: 20px;">游戏结束</h2>
-      <p>最终得分: ${this.score}</p>
-      <button onclick="location.reload()" style="
-        margin-top: 20px;
-        padding: 10px 20px;
-        font-size: 18px;
-        background: #0088ff;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-      ">重新开始</button>
+    const restartButton = document.createElement('button');
+    restartButton.textContent = '重新开始';
+    restartButton.style.cssText = `
+      margin-top: 20px;
+      padding: 12px 24px;
+      font-size: 18px;
+      background: #0088ff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
     `;
+
+    // 添加按钮悬停效果
+    restartButton.addEventListener('mouseenter', () => {
+      restartButton.style.background = '#0066cc';
+      restartButton.style.transform = 'scale(1.05)';
+    });
+    restartButton.addEventListener('mouseleave', () => {
+      restartButton.style.background = '#0088ff';
+      restartButton.style.transform = 'scale(1)';
+    });
+
+    // 绑定重新开始事件
+    restartButton.addEventListener('click', () => {
+      this.restartGame();
+    });
+
+    gameOverDiv.innerHTML = `
+      <h2 style="color: #ff4444; margin-bottom: 20px; text-shadow: 0 0 10px rgba(255, 68, 68, 0.8);">🚀 游戏结束</h2>
+      <p style="margin-bottom: 10px;">最终得分: <span style="color: #00ff88; font-weight: bold;">${this.score}</span></p>
+      <p style="font-size: 16px; color: #cccccc; margin-bottom: 20px;">感谢您的游戏！</p>
+    `;
+    gameOverDiv.appendChild(restartButton);
 
     document.body.appendChild(gameOverDiv);
 
-    console.log(`游戏结束！最终得分: ${this.score}`);
+    console.log(`💀 游戏结束！最终得分: ${this.score}`);
+  }
+
+  /**
+   * 重新开始游戏
+   * 完全重置游戏状态而不是重新加载页面
+   */
+  private restartGame(): void {
+    console.log('🔄 重新开始游戏...');
+
+    // 移除游戏结束界面
+    const gameOverScreen = document.getElementById('game-over-screen');
+    if (gameOverScreen) {
+      gameOverScreen.remove();
+    }
+
+    // 重置游戏状态
+    this.gameRunning = false;
+    this.score = 0;
+    this.gameStartTime = 0;
+    this.lastTime = 0;
+
+    // 清理所有敌机
+    this.enemies.forEach(enemy => {
+      this.gameWorld.removeFromScene(enemy.mesh);
+    });
+    this.enemies = [];
+
+    // 重置玩家状态
+    this.player.reset();
+    this.player.position.set(0, 0, 0);
+
+    // 重置控制系统
+    this.controls.reset();
+
+    // 重置瞄准镜
+    this.crosshair.reset();
+
+    // 重新开始游戏
+    this.startGame();
+
+    console.log('✅ 游戏重新开始成功！');
   }
 
   /**

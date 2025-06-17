@@ -545,4 +545,37 @@ export class Player {
   public setAudioManager(audioManager: AudioManager): void {
     this.audioManager = audioManager;
   }
+
+  /**
+   * 重置玩家状态
+   * 用于游戏重新开始时恢复初始状态
+   */
+  public reset(): void {
+    // 重置位置和运动
+    this.position.set(0, 0, 0);
+    this.velocity.set(0, 0, 0);
+    this.mesh.position.copy(this.position);
+
+    // 重置生命值和能量
+    this.health = this.maxHealth;
+    this.energy = this.maxEnergy;
+
+    // 重置武器系统
+    this.projectiles = [];
+    this.lastShotTime = 0;
+    this.weaponType = 'normal';
+
+    // 重置动画时间
+    this.animationTime = 0;
+
+    // 重置飞机姿态
+    this.mesh.rotation.set(0, 0, 0);
+
+    // 重置技能冷却时间
+    Object.keys(this.skills).forEach(skillName => {
+      this.skills[skillName].lastUsed = 0;
+    });
+
+    console.log('✅ 玩家状态已重置');
+  }
 }

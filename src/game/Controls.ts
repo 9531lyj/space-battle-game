@@ -39,6 +39,13 @@ export class Controls {
     document.addEventListener('pointerlockchange', () => this.onPointerLockChange());
     document.addEventListener('mousemove', (event) => this.onMouseMove(event));
 
+    // 鼠标按键事件
+    this.canvas.addEventListener('mousedown', (event) => this.onMouseDown(event));
+    this.canvas.addEventListener('mouseup', (event) => this.onMouseUp(event));
+
+    // 滚轮事件
+    this.canvas.addEventListener('wheel', (event) => this.onMouseWheel(event), { passive: false });
+
     // 防止右键菜单
     this.canvas.addEventListener('contextmenu', (event) => event.preventDefault());
   }
@@ -86,6 +93,29 @@ export class Controls {
 
   private onPointerLockChange(): void {
     this.isMouseLocked = document.pointerLockElement === this.canvas;
+    console.log('鼠标锁定状态:', this.isMouseLocked ? '已锁定' : '已解锁');
+  }
+
+  private onMouseDown(event: MouseEvent): void {
+    if (event.button === 2 && this.crosshair) { // 右键
+      this.crosshair.startAiming();
+      event.preventDefault();
+    }
+  }
+
+  private onMouseUp(event: MouseEvent): void {
+    if (event.button === 2 && this.crosshair) { // 右键
+      this.crosshair.stopAiming();
+      event.preventDefault();
+    }
+  }
+
+  private onMouseWheel(event: WheelEvent): void {
+    if (this.crosshair && this.crosshair.isCurrentlyAiming()) {
+      // 只有在瞄准状态下才处理滚轮事件
+      this.crosshair.handleZoom(event.deltaY);
+      event.preventDefault();
+    }
   }
 
   public update(): void {
