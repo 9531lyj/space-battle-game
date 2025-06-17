@@ -2,6 +2,8 @@
 import * as THREE from 'three';
 // 导入炮弹系统
 import { Projectile } from './Projectile';
+// 导入音频管理系统
+import { AudioManager } from '../audio/AudioManager';
 
 /**
  * 技能接口定义
@@ -56,6 +58,9 @@ export class Player {
 
   // 动画系统
   private animationTime: number;       // 动画时间计数器
+
+  // 音频系统
+  private audioManager: AudioManager | null = null; // 音频管理器
 
   /**
    * 构造函数 - 初始化玩家飞机
@@ -383,6 +388,11 @@ export class Player {
 
     this.lastShotTime = currentTime;
 
+    // 播放射击音效
+    if (this.audioManager) {
+      this.audioManager.playSoundEffect('shoot');
+    }
+
     // 确定射击方向
     let shootDirection = new THREE.Vector3(0, 0, -50);
     if (aimDirection) {
@@ -527,5 +537,12 @@ export class Player {
     if (!skill) return false;
 
     return this.getSkillCooldown(skillName) === 0 && this.energy >= skill.energy;
+  }
+
+  /**
+   * 设置音频管理器
+   */
+  public setAudioManager(audioManager: AudioManager): void {
+    this.audioManager = audioManager;
   }
 }

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Player } from './Player';
 import { Crosshair } from './Crosshair';
+import { AudioManager } from '../audio/AudioManager';
 
 export class Controls {
   private keys: { [key: string]: boolean } = {};
@@ -10,6 +11,7 @@ export class Controls {
   private canvas: HTMLCanvasElement;
   private crosshair: Crosshair | null = null;
   private isMouseLocked: boolean = false;
+  private audioManager: AudioManager | null = null;
 
   constructor(player: Player, camera: THREE.PerspectiveCamera, canvas: HTMLCanvasElement) {
     this.player = player;
@@ -21,6 +23,10 @@ export class Controls {
 
   public setCrosshair(crosshair: Crosshair): void {
     this.crosshair = crosshair;
+  }
+
+  public setAudioManager(audioManager: AudioManager): void {
+    this.audioManager = audioManager;
   }
 
   private initEventListeners(): void {
@@ -39,7 +45,17 @@ export class Controls {
 
   private onKeyDown(event: KeyboardEvent): void {
     this.keys[event.code.toLowerCase()] = true;
-    
+
+    // 处理特殊按键
+    if (event.code === 'KeyM' && this.audioManager) {
+      // M键切换音乐开关
+      this.audioManager.toggleMute().then(isMuted => {
+        console.log(isMuted ? '🔇 音乐已静音' : '🎵 音乐已开启');
+      });
+      event.preventDefault();
+      return;
+    }
+
     // 防止默认行为
     if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.code)) {
       event.preventDefault();

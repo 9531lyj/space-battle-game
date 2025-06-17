@@ -8,6 +8,7 @@ import { Player } from './game/Player';          // 玩家系统
 import { Enemy } from './game/Enemy';            // 敌机AI系统
 import { Controls } from './game/Controls';      // 控制系统
 import { Crosshair } from './game/Crosshair';   // 瞄准镜系统
+import { AudioManager } from './audio/AudioManager'; // 音频管理系统
 
 /**
  * 太空战斗游戏主类
@@ -31,6 +32,7 @@ class SpaceBattleGame {
   private enemies: Enemy[] = [];    // 敌机数组
   private controls!: Controls;       // 输入控制系统
   private crosshair!: Crosshair;     // 瞄准镜系统
+  private audioManager!: AudioManager; // 音频管理系统
 
   // 游戏状态管理
   private gameRunning: boolean = false;        // 游戏运行状态
@@ -89,6 +91,13 @@ class SpaceBattleGame {
     // 将瞄准镜系统连接到控制系统，实现瞄准功能
     this.controls.setCrosshair(this.crosshair);
 
+    // 初始化音频管理系统
+    this.audioManager = new AudioManager();
+
+    // 将音频管理器传递给控制系统和玩家系统
+    this.controls.setAudioManager(this.audioManager);
+    this.player.setAudioManager(this.audioManager);
+
     // 获取并绑定游戏UI元素
     this.scoreElement = document.querySelector('#score')!;
     this.healthElement = document.querySelector('#health')!;
@@ -109,18 +118,28 @@ class SpaceBattleGame {
     this.startGame();
   }
 
-  private startGame(): void {
+  private async startGame(): Promise<void> {
     this.gameRunning = true;
     this.gameStartTime = Date.now();
     this.lastTime = performance.now();
+
+    // 开始播放背景音乐
+    try {
+      await this.audioManager.playBGM();
+      console.log('🎵 太空战斗BGM开始播放');
+    } catch (error) {
+      console.warn('BGM播放失败，可能需要用户交互:', error);
+    }
+
     this.gameLoop();
 
-    console.log('太空战斗游戏已启动！');
-    console.log('控制说明：');
-    console.log('WASD - 移动飞机');
-    console.log('Q/E - 上升/下降');
-    console.log('空格键 - 发射炮弹');
-    console.log('鼠标 - 控制视角（点击画面锁定鼠标）');
+    console.log('🚀 太空战斗游戏已启动！');
+    console.log('🎮 控制说明：');
+    console.log('  WASD - 移动飞机');
+    console.log('  Q/E - 上升/下降');
+    console.log('  空格键 - 发射炮弹');
+    console.log('  鼠标 - 控制视角（点击画面锁定鼠标）');
+    console.log('  M键 - 切换音乐开关');
   }
 
   private gameLoop(): void {
@@ -234,6 +253,9 @@ class SpaceBattleGame {
           // 敌机受到伤害，传递武器类型用于击毁效果
           enemy.takeDamage(projectile.damage, weaponType);
 
+          // 播放击中音效
+          this.audioManager.playSoundEffect('hit');
+
           // 从场景中移除炮弹
           this.gameWorld.removeFromScene(projectile.mesh);
           this.player.removeProjectile(projectile);
@@ -241,6 +263,7 @@ class SpaceBattleGame {
           // 根据武器类型创建不同的爆炸效果
           if (weaponType === 'missile') {
             this.createExplosion(projectile.position, true); // 大爆炸
+            this.audioManager.playSoundEffect('explosion'); // 爆炸音效
           } else {
             this.createExplosion(projectile.position); // 普通爆炸
           }
@@ -248,6 +271,7 @@ class SpaceBattleGame {
           // 如果敌机被击毁，创建额外的击毁效果
           if (!enemy.isAlive()) {
             this.createEnemyDestroyEffect(enemy.position, weaponType);
+            this.audioManager.playSoundEffect('explosion'); // 击毁音效
           }
 
           break; // 炮弹击中目标后停止检测
@@ -263,6 +287,9 @@ class SpaceBattleGame {
         if (projectile.checkCollision(this.player.mesh)) {
           // 玩家受到伤害
           this.player.takeDamage(projectile.damage);
+
+          // 播放玩家受伤音效
+          this.audioManager.playSoundEffect('hit');
 
           // 从场景中移除炮弹
           this.gameWorld.removeFromScene(projectile.mesh);
@@ -281,6 +308,9 @@ class SpaceBattleGame {
         // 双方都受到碰撞伤害
         this.player.takeDamage(50);
         enemy.takeDamage(100);
+
+        // 播放大爆炸音效
+        this.audioManager.playSoundEffect('explosion');
 
         // 创建大型爆炸效果
         this.createExplosion(enemy.position, true);
@@ -472,6 +502,9 @@ class SpaceBattleGame {
 
   private gameOver(): void {
     this.gameRunning = false;
+
+    // 停止背景音乐
+    this.audioManager.stopBGM();
 
     // 显示游戏结束信息
     const gameOverDiv = document.createElement('div');
