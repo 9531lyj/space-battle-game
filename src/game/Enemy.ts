@@ -322,22 +322,167 @@ export class Enemy {
     return true;
   }
 
-  public takeDamage(damage: number): void {
+  /**
+   * 敌机受到伤害处理
+   * @param damage 伤害值
+   * @param weaponType 武器类型，用于不同的击毁效果
+   */
+  public takeDamage(damage: number, weaponType: string = 'normal'): void {
     this.health = Math.max(0, this.health - damage);
-    
+
     // 受伤效果
     if (this.health > 0) {
+      // 普通受伤闪烁效果
       this.mesh.children.forEach(child => {
         if (child instanceof THREE.Mesh) {
           const material = child.material as THREE.MeshLambertMaterial;
           const originalColor = material.color.clone();
           material.color.setHex(0xffffff);
-          
+
           setTimeout(() => {
             material.color.copy(originalColor);
           }, 100);
         }
       });
+    } else {
+      // 敌机被击毁，创建击毁效果
+      this.createDestroyEffect(weaponType);
+    }
+  }
+
+  /**
+   * 创建敌机击毁效果
+   * @param weaponType 武器类型，不同武器有不同的击毁效果
+   */
+  private createDestroyEffect(weaponType: string): void {
+    // 根据武器类型创建不同的击毁效果
+    switch (weaponType) {
+      case 'missile':
+        this.createMissileDestroyEffect();
+        break;
+      case 'laser':
+        this.createLaserDestroyEffect();
+        break;
+      default:
+        this.createNormalDestroyEffect();
+        break;
+    }
+  }
+
+  /**
+   * 导弹击毁效果 - 大爆炸
+   */
+  private createMissileDestroyEffect(): void {
+    // 敌机模型快速旋转并缩放
+    const destroyAnimation = () => {
+      this.mesh.rotation.x += 0.3;
+      this.mesh.rotation.y += 0.2;
+      this.mesh.rotation.z += 0.4;
+      this.mesh.scale.multiplyScalar(0.95);
+
+      // 添加火花效果
+      this.createSparkEffect();
+
+      if (this.mesh.scale.x > 0.1) {
+        requestAnimationFrame(destroyAnimation);
+      }
+    };
+    destroyAnimation();
+  }
+
+  /**
+   * 激光击毁效果 - 切割效果
+   */
+  private createLaserDestroyEffect(): void {
+    // 敌机模型分裂效果
+    this.mesh.children.forEach((child, index) => {
+      if (child instanceof THREE.Mesh) {
+        const direction = new THREE.Vector3(
+          (Math.random() - 0.5) * 2,
+          (Math.random() - 0.5) * 2,
+          (Math.random() - 0.5) * 2
+        ).normalize();
+
+        const animateFragment = () => {
+          child.position.add(direction.clone().multiplyScalar(0.5));
+          child.rotation.x += 0.1;
+          child.rotation.y += 0.1;
+          child.scale.multiplyScalar(0.98);
+
+          if (child.scale.x > 0.1) {
+            requestAnimationFrame(animateFragment);
+          }
+        };
+
+        setTimeout(() => animateFragment(), index * 50);
+      }
+    });
+  }
+
+  /**
+   * 普通击毁效果 - 标准爆炸
+   */
+  private createNormalDestroyEffect(): void {
+    // 敌机模型淡出效果
+    const fadeOut = () => {
+      this.mesh.children.forEach(child => {
+        if (child instanceof THREE.Mesh) {
+          const material = child.material as THREE.MeshLambertMaterial;
+          material.transparent = true;
+          material.opacity = Math.max(0, material.opacity - 0.05);
+        }
+      });
+
+      this.mesh.scale.multiplyScalar(1.02); // 轻微膨胀
+
+      if (this.mesh.scale.x < 1.5) {
+        requestAnimationFrame(fadeOut);
+      }
+    };
+    fadeOut();
+  }
+
+  /**
+   * 创建火花粒子效果
+   */
+  private createSparkEffect(): void {
+    const sparkCount = 8;
+    for (let i = 0; i < sparkCount; i++) {
+      const spark = new THREE.Mesh(
+        new THREE.SphereGeometry(0.1, 4, 4),
+        new THREE.MeshBasicMaterial({
+          color: 0xffaa00,
+          transparent: true,
+          opacity: 1
+        })
+      );
+
+      spark.position.copy(this.position);
+      spark.position.add(new THREE.Vector3(
+        (Math.random() - 0.5) * 4,
+        (Math.random() - 0.5) * 4,
+        (Math.random() - 0.5) * 4
+      ));
+
+      // 火花动画
+      const animateSpark = () => {
+        spark.position.y -= 0.1;
+        const material = spark.material as THREE.MeshBasicMaterial;
+        material.opacity -= 0.02;
+
+        if (material.opacity > 0) {
+          requestAnimationFrame(animateSpark);
+        } else {
+          // 从场景中移除火花（需要在主游戏循环中处理）
+          spark.userData.shouldRemove = true;
+        }
+      };
+
+      // 将火花添加到场景中（需要在主游戏循环中处理）
+      spark.userData.isSpark = true;
+      this.mesh.add(spark);
+
+      setTimeout(() => animateSpark(), i * 100);
     }
   }
 

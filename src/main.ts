@@ -162,21 +162,26 @@ class SpaceBattleGame {
   }
 
   private updateEnemies(deltaTime: number): void {
-    this.enemies.forEach((enemy, index) => {
+    // 使用倒序遍历避免数组索引问题
+    for (let index = this.enemies.length - 1; index >= 0; index--) {
+      const enemy = this.enemies[index];
       enemy.update(deltaTime, this.player.position);
 
-      // 移除死亡或超出边界的敌机
+      // 检查敌机是否需要移除
       if (!enemy.isAlive() || enemy.isOutOfBounds()) {
+        // 从场景中移除敌机
         this.gameWorld.removeFromScene(enemy.mesh);
 
-        // 如果敌机被击毁，增加分数
+        // 如果敌机被击毁（而不是超出边界），增加分数
         if (!enemy.isAlive()) {
           this.score += enemy.getScore();
+          console.log(`敌机被击毁！得分 +${enemy.getScore()}，总分: ${this.score}`);
         }
 
+        // 从敌机数组中移除
         this.enemies.splice(index, 1);
       }
-    });
+    }
   }
 
   private spawnEnemies(): void {
@@ -223,15 +228,27 @@ class SpaceBattleGame {
         const enemy = this.enemies[eIndex];
 
         if (projectile.checkCollision(enemy.mesh)) {
-          // 敌机受到伤害
-          enemy.takeDamage(projectile.damage);
+          // 根据炮弹类型确定武器类型
+          const weaponType = this.getWeaponTypeFromProjectile(projectile);
+
+          // 敌机受到伤害，传递武器类型用于击毁效果
+          enemy.takeDamage(projectile.damage, weaponType);
 
           // 从场景中移除炮弹
           this.gameWorld.removeFromScene(projectile.mesh);
           this.player.removeProjectile(projectile);
 
-          // 创建命中爆炸效果
-          this.createExplosion(projectile.position);
+          // 根据武器类型创建不同的爆炸效果
+          if (weaponType === 'missile') {
+            this.createExplosion(projectile.position, true); // 大爆炸
+          } else {
+            this.createExplosion(projectile.position); // 普通爆炸
+          }
+
+          // 如果敌机被击毁，创建额外的击毁效果
+          if (!enemy.isAlive()) {
+            this.createEnemyDestroyEffect(enemy.position, weaponType);
+          }
 
           break; // 炮弹击中目标后停止检测
         }
@@ -490,6 +507,188 @@ class SpaceBattleGame {
     document.body.appendChild(gameOverDiv);
 
     console.log(`游戏结束！最终得分: ${this.score}`);
+  }
+
+  /**
+   * 根据炮弹特征判断武器类型
+   * @param projectile 炮弹对象
+   * @returns 武器类型字符串
+   */
+  private getWeaponTypeFromProjectile(projectile: any): string {
+    // 根据炮弹的属性判断武器类型
+    if (projectile.damage >= 80) {
+      return 'missile'; // 高伤害的是导弹
+    } else if (projectile.damage >= 40) {
+      return 'laser'; // 中等伤害的是激光
+    } else {
+      return 'normal'; // 普通炮弹
+    }
+  }
+
+  /**
+   * 创建敌机击毁效果
+   * @param position 击毁位置
+   * @param weaponType 武器类型
+   */
+  private createEnemyDestroyEffect(position: THREE.Vector3, weaponType: string): void {
+    // 根据武器类型创建不同的击毁效果
+    switch (weaponType) {
+      case 'missile':
+        this.createMissileDestroyEffect(position);
+        break;
+      case 'laser':
+        this.createLaserDestroyEffect(position);
+        break;
+      default:
+        this.createNormalDestroyEffect(position);
+        break;
+    }
+  }
+
+  /**
+   * 导弹击毁效果 - 大型爆炸和冲击波
+   */
+  private createMissileDestroyEffect(position: THREE.Vector3): void {
+    // 创建冲击波效果
+    const shockwaveGeometry = new THREE.RingGeometry(0, 1, 16);
+    const shockwaveMaterial = new THREE.MeshBasicMaterial({
+      color: 0xff4400,
+      transparent: true,
+      opacity: 0.8,
+      side: THREE.DoubleSide
+    });
+    const shockwave = new THREE.Mesh(shockwaveGeometry, shockwaveMaterial);
+    shockwave.position.copy(position);
+    this.gameWorld.addToScene(shockwave);
+
+    // 冲击波扩散动画
+    const animateShockwave = () => {
+      shockwave.scale.multiplyScalar(1.1);
+      shockwaveMaterial.opacity -= 0.02;
+
+      if (shockwaveMaterial.opacity > 0) {
+        requestAnimationFrame(animateShockwave);
+      } else {
+        this.gameWorld.removeFromScene(shockwave);
+      }
+    };
+    animateShockwave();
+
+    // 创建火球效果
+    this.createFireball(position);
+  }
+
+  /**
+   * 激光击毁效果 - 能量爆发
+   */
+  private createLaserDestroyEffect(position: THREE.Vector3): void {
+    // 创建能量爆发效果
+    const energyBurst = new THREE.Mesh(
+      new THREE.SphereGeometry(2, 8, 8),
+      new THREE.MeshBasicMaterial({
+        color: 0x00ffff,
+        transparent: true,
+        opacity: 0.8
+      })
+    );
+    energyBurst.position.copy(position);
+    this.gameWorld.addToScene(energyBurst);
+
+    // 能量爆发动画
+    const animateEnergyBurst = () => {
+      energyBurst.scale.multiplyScalar(1.05);
+      const material = energyBurst.material as THREE.MeshBasicMaterial;
+      material.opacity -= 0.03;
+
+      if (material.opacity > 0) {
+        requestAnimationFrame(animateEnergyBurst);
+      } else {
+        this.gameWorld.removeFromScene(energyBurst);
+      }
+    };
+    animateEnergyBurst();
+  }
+
+  /**
+   * 普通击毁效果 - 标准爆炸
+   */
+  private createNormalDestroyEffect(position: THREE.Vector3): void {
+    // 创建碎片效果
+    for (let i = 0; i < 6; i++) {
+      const fragment = new THREE.Mesh(
+        new THREE.BoxGeometry(0.3, 0.3, 0.3),
+        new THREE.MeshBasicMaterial({
+          color: 0x666666,
+          transparent: true,
+          opacity: 1
+        })
+      );
+
+      fragment.position.copy(position);
+      const direction = new THREE.Vector3(
+        (Math.random() - 0.5) * 2,
+        (Math.random() - 0.5) * 2,
+        (Math.random() - 0.5) * 2
+      ).normalize();
+
+      this.gameWorld.addToScene(fragment);
+
+      // 碎片飞散动画
+      const animateFragment = () => {
+        fragment.position.add(direction.clone().multiplyScalar(0.3));
+        fragment.rotation.x += 0.1;
+        fragment.rotation.y += 0.1;
+        const material = fragment.material as THREE.MeshBasicMaterial;
+        material.opacity -= 0.02;
+
+        if (material.opacity > 0) {
+          requestAnimationFrame(animateFragment);
+        } else {
+          this.gameWorld.removeFromScene(fragment);
+        }
+      };
+
+      setTimeout(() => animateFragment(), i * 50);
+    }
+  }
+
+  /**
+   * 创建火球效果
+   */
+  private createFireball(position: THREE.Vector3): void {
+    const fireball = new THREE.Mesh(
+      new THREE.SphereGeometry(3, 12, 12),
+      new THREE.MeshBasicMaterial({
+        color: 0xff6600,
+        transparent: true,
+        opacity: 0.9
+      })
+    );
+    fireball.position.copy(position);
+    this.gameWorld.addToScene(fireball);
+
+    // 火球动画
+    const animateFireball = () => {
+      fireball.scale.multiplyScalar(1.03);
+      const material = fireball.material as THREE.MeshBasicMaterial;
+      material.opacity -= 0.025;
+
+      // 颜色变化：橙色 -> 红色 -> 黑色
+      if (material.opacity > 0.5) {
+        material.color.setHex(0xff6600); // 橙色
+      } else if (material.opacity > 0.2) {
+        material.color.setHex(0xff0000); // 红色
+      } else {
+        material.color.setHex(0x330000); // 暗红色
+      }
+
+      if (material.opacity > 0) {
+        requestAnimationFrame(animateFireball);
+      } else {
+        this.gameWorld.removeFromScene(fireball);
+      }
+    };
+    animateFireball();
   }
 }
 
